@@ -1,7 +1,7 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { IUserService, NewUser, UpdateUser } from "../types/Users.types";
-import { HttpError } from "../utils/error.handler";
 import { isValidObjectId } from "mongoose";
+import { ApiError } from "../errors/ApiError";
 
 //El controlador es el encargado de recibir la peticion HTTP y mandar la información al service
 export default class UserController {
@@ -18,27 +18,31 @@ export default class UserController {
       res.status(500).json(error);
     }
   };
-  createUser = async (req: Request<{}, {}, NewUser>, res: Response) => {
+  createUser = async (
+    req: Request<{}, {}, NewUser>,
+    res: Response,
+    next: NextFunction
+  ) => {
     try {
       const { username, email, password, first_name, last_name, birthdate } =
         req.body;
       if (!username || !username.trim()) {
-        throw HttpError.BadRequest("Username is required");
+        throw ApiError.badRequest("Username is required");
       }
       if (!email || !email.trim()) {
-        throw HttpError.BadRequest("Email is required");
+        throw ApiError.badRequest("Email is required");
       }
       if (!password || !password.trim()) {
-        throw HttpError.BadRequest("Password is required");
+        throw ApiError.badRequest("Password is required");
       }
       if (!first_name || !first_name.trim()) {
-        throw HttpError.BadRequest("First name is required");
+        throw ApiError.badRequest("First name is required");
       }
       if (!last_name || !last_name.trim()) {
-        throw HttpError.BadRequest("Last name is required");
+        throw ApiError.badRequest("Last name is required");
       }
       if (!birthdate) {
-        throw HttpError.BadRequest("Birthdate is required");
+        throw ApiError.badRequest("Birthdate is required");
       }
       const user = await this.service.createUser({
         username,
@@ -50,16 +54,13 @@ export default class UserController {
       });
       res.status(200).json({ message: "created", user });
     } catch (error) {
-      if (error instanceof HttpError) {
-        res.status(error.statusCode).json({ message: error.message });
-      } else {
-        res.status(500).json(error);
-      }
+      next(error);
     }
   };
   updateUser = async (
     req: Request<{ id: string }, {}, UpdateUser>,
-    res: Response
+    res: Response,
+    next: NextFunction
   ) => {
     try {
       const { id } = req.params;
@@ -81,16 +82,12 @@ export default class UserController {
         data.cart = cart;
       }
       if (Object.keys(data).length === 0) {
-        throw HttpError.BadRequest("No data to update");
+        throw ApiError.badRequest("No data to update");
       }
       const updatedUser = await this.service.updateUser(id, data);
       res.status(200).json({ message: "user updated", data: updatedUser });
     } catch (error) {
-      if (error instanceof HttpError) {
-        res.status(error.statusCode).json({ message: error.message });
-      } else {
-        res.status(500).json(error);
-      }
+      next(error);
     }
   };
   deleteUser = async (req: Request, res: Response) => {

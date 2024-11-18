@@ -1,3 +1,4 @@
+import { ApiError } from "../errors/ApiError";
 import {
   IUserRepository,
   IUserService,
@@ -5,7 +6,6 @@ import {
   NewUser,
   UpdateUser,
 } from "../types/Users.types";
-import { HttpError } from "../utils/error.handler";
 import { CryptPassword } from "../utils/bcrypt";
 
 //El service es el encargado de interconectar el controlador y el repository
@@ -18,11 +18,7 @@ export class UserService implements IUserService {
     const userEmail = await this.userRepository.findByEmail(user.email);
     const userName = await this.userRepository.findByUsername(user.username);
     if (userEmail || userName) {
-      throw new HttpError(
-        "User already exists",
-        HttpError.codes.badRequest,
-        "User exists"
-      );
+      throw ApiError.badRequest("User already exists");
     }
     const newPassword = CryptPassword.hashPassword(user.password);
     return await this.userRepository.create({ ...user, password: newPassword });
@@ -39,11 +35,7 @@ export class UserService implements IUserService {
   ): Promise<IUser | null | undefined> {
     const user = await this.userRepository.findById(id);
     if (!user) {
-      throw new HttpError(
-        "User not found",
-        HttpError.codes.notFound,
-        "User not found"
-      );
+      throw ApiError.badRequest("User not found");
     }
     return await this.userRepository.update(id, data);
   }

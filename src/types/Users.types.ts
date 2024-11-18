@@ -10,6 +10,7 @@ export interface IUser {
   last_name: string;
   birthdate: Date;
   cart: Types.ObjectId;
+  _id: Types.ObjectId;
 }
 
 export interface NewUser
